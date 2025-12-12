@@ -308,12 +308,16 @@ export class MaskManager {
 
       // Only draw outline and editing visuals if not hidden
       if (!hideEditingVisuals) {
-        ctx.strokeStyle = '#ff4444';
-        ctx.lineWidth = 2;
+        // Highlight selected mask with different color
+        const isSelected = this.selectedMask && this.selectedMask.id === mask.id;
+        ctx.strokeStyle = isSelected ? '#4a9eff' : '#ff4444';
+        ctx.lineWidth = isSelected ? 3 : 2;
         ctx.stroke();
 
-        // Draw points and handles
-        this.drawMaskPoints(ctx, mask);
+        // Draw points and handles only for selected mask in select mode
+        if (isSelected) {
+          this.drawMaskPoints(ctx, mask);
+        }
       }
 
       ctx.restore();

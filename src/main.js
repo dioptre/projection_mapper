@@ -53,6 +53,7 @@ class ProjectionMapper {
     this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
     this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
     this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+    this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
 
     // Global mouse move for idle detection
     document.addEventListener('mousemove', (e) => this.onGlobalMouseMove(e));
@@ -146,6 +147,11 @@ class ProjectionMapper {
   }
 
   setTool(tool) {
+    // Auto-close any open mask before switching tools
+    if (this.currentTool === 'mask' && tool !== 'mask') {
+      this.maskManager.closeMask();
+    }
+
     this.currentTool = tool;
 
     // Update toolbar buttons
@@ -262,24 +268,38 @@ class ProjectionMapper {
     }
   }
 
+  onDoubleClick(e) {
+    // Double-click closes mask in mask mode
+    if (this.currentTool === 'mask') {
+      this.maskManager.closeMask();
+    }
+  }
+
   onKeyDown(e) {
-    // Delete key - remove selected point or sketch
+    // Delete key - remove selected point, sketch, or mask
     if (e.key === 'Delete' || e.key === 'Backspace') {
       if (this.currentTool === 'select') {
         const selectedSketch = this.sketchManager.getSelectedSketch();
+        const selectedMask = this.maskManager.selectedMask;
+
         if (selectedSketch) {
           this.sketchManager.removeSketch(selectedSketch.id);
           this.hidePropertiesPanel();
+        } else if (selectedMask) {
+          this.maskManager.deleteMask(selectedMask.id);
+          this.maskManager.selectMaskByIndex(null);
         }
       }
     }
 
-    // Escape - deselect / finish mask
+    // Escape - close and finish mask, or deselect
     if (e.key === 'Escape') {
       if (this.currentTool === 'mask') {
-        this.maskManager.finishMask();
+        this.maskManager.closeMask(); // Close the mask
+        this.maskManager.finishMask(); // Then finish editing
       } else if (this.currentTool === 'select') {
         this.sketchManager.selectSketch(null);
+        this.maskManager.selectMaskByIndex(null);
         this.hidePropertiesPanel();
       }
     }

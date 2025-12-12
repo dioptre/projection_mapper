@@ -338,8 +338,8 @@ class ProjectionMapper {
     const app = document.getElementById('app');
     const hideEditingVisuals = app.classList.contains('hide-ui') || this.isPresentationMode;
 
-    // Draw masks (hide red outlines in presentation/hide-ui mode)
-    this.maskManager.drawMasks(hideEditingVisuals);
+    // Draw masks (hide red outlines in presentation/hide-ui mode, pass current tool)
+    this.maskManager.drawMasks(hideEditingVisuals, this.currentTool);
 
     // Draw transform handles for selected sketch (only if not hiding UI)
     const selectedSketch = this.sketchManager.getSelectedSketch();

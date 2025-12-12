@@ -291,7 +291,7 @@ export class MaskManager {
     });
   }
 
-  drawMasks(hideEditingVisuals = false) {
+  drawMasks(hideEditingVisuals = false, currentTool = 'select') {
     const ctx = this.ctx;
 
     this.masks.forEach(mask => {
@@ -314,8 +314,9 @@ export class MaskManager {
         ctx.lineWidth = isSelected ? 3 : 2;
         ctx.stroke();
 
-        // Draw points and handles only for selected mask in select mode
-        if (isSelected) {
+        // In mask mode: show all points
+        // In select mode: only show points for selected mask
+        if (currentTool === 'mask' || isSelected) {
           this.drawMaskPoints(ctx, mask);
         }
       }

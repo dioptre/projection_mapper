@@ -71,14 +71,19 @@ export class SketchManager {
         <head>
           <meta charset="UTF-8">
           <style>
-            body {
+            html, body {
               margin: 0;
               padding: 0;
+              width: 100%;
+              height: 100%;
               overflow: hidden;
-              background: transparent;
+              background: #1a1a1a; /* Dark gray so empty sketches are visible */
             }
             canvas {
               display: block;
+              width: 100% !important;
+              height: 100% !important;
+              background: transparent;
             }
           </style>
           <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>

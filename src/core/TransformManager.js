@@ -14,13 +14,33 @@ export class TransformManager {
 
     const ctx = this.ctx;
     const pos = sketch.position;
+    const rotation = sketch.transform.rotation * (Math.PI / 180); // Convert to radians
+
+    // Calculate center point for rotation
+    const centerX = pos.x + sketch.size.width / 2;
+    const centerY = pos.y + sketch.size.height / 2;
+
+    // Helper function to rotate a point around center
+    const rotatePoint = (x, y) => {
+      const dx = x - centerX;
+      const dy = y - centerY;
+      return {
+        x: centerX + dx * Math.cos(rotation) - dy * Math.sin(rotation),
+        y: centerY + dx * Math.sin(rotation) + dy * Math.cos(rotation)
+      };
+    };
+
+    // Transform corner positions by rotation
+    const transformedCorners = sketch.corners.map(corner => {
+      return rotatePoint(pos.x + corner.x, pos.y + corner.y);
+    });
 
     // Draw corner handles
-    sketch.corners.forEach((corner, index) => {
+    transformedCorners.forEach((corner, index) => {
       ctx.beginPath();
       ctx.arc(
-        pos.x + corner.x,
-        pos.y + corner.y,
+        corner.x,
+        corner.y,
         6,
         0,
         Math.PI * 2
@@ -38,14 +58,11 @@ export class TransformManager {
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
 
-    sketch.corners.forEach((corner, index) => {
-      const x = pos.x + corner.x;
-      const y = pos.y + corner.y;
-
+    transformedCorners.forEach((corner, index) => {
       if (index === 0) {
-        ctx.moveTo(x, y);
+        ctx.moveTo(corner.x, corner.y);
       } else {
-        ctx.lineTo(x, y);
+        ctx.lineTo(corner.x, corner.y);
       }
     });
     ctx.closePath();
@@ -57,12 +74,28 @@ export class TransformManager {
     if (!sketch) return null;
 
     const pos = sketch.position;
+    const rotation = sketch.transform.rotation * (Math.PI / 180);
     const hitRadius = 10;
+
+    // Calculate center point for rotation
+    const centerX = pos.x + sketch.size.width / 2;
+    const centerY = pos.y + sketch.size.height / 2;
+
+    // Helper function to rotate a point around center
+    const rotatePoint = (px, py) => {
+      const dx = px - centerX;
+      const dy = py - centerY;
+      return {
+        x: centerX + dx * Math.cos(rotation) - dy * Math.sin(rotation),
+        y: centerY + dx * Math.sin(rotation) + dy * Math.cos(rotation)
+      };
+    };
 
     for (let i = 0; i < sketch.corners.length; i++) {
       const corner = sketch.corners[i];
-      const dx = x - (pos.x + corner.x);
-      const dy = y - (pos.y + corner.y);
+      const rotated = rotatePoint(pos.x + corner.x, pos.y + corner.y);
+      const dx = x - rotated.x;
+      const dy = y - rotated.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist <= hitRadius) {

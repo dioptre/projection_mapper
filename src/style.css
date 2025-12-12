@@ -177,6 +177,49 @@ body {
   outline: none;
 }
 
+/* Range Slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-light);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: var(--accent-hover);
+  transform: scale(1.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  background: var(--accent-hover);
+  transform: scale(1.2);
+}
+
 /* Buttons */
 .btn-primary,
 .btn-secondary {
@@ -218,19 +261,33 @@ body {
   z-index: 9999;
 }
 
+#app.fullscreen .main-container {
+  position: fixed !important;
+  top: 50px !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: calc(100vh - 50px) !important;
+}
+
 #app.fullscreen .toolbar {
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  transition: opacity 0.3s ease-out;
 }
 
 #app.fullscreen.hide-ui .toolbar {
-  transform: translateY(-100%);
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
-  border-bottom: none;
-  height: 0 !important;
-  padding: 0 !important;
-  overflow: hidden;
+  background-color: #000000 !important;
+  border-bottom: none !important;
+}
+
+#app.fullscreen.hide-ui .main-container {
+  top: 50px !important;
+  height: calc(100vh - 50px) !important;
 }
 
 #app.fullscreen.hide-ui .properties-panel,

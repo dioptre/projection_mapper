@@ -291,7 +291,7 @@ export class MaskManager {
     });
   }
 
-  drawMasks() {
+  drawMasks(hideEditingVisuals = false) {
     const ctx = this.ctx;
 
     this.masks.forEach(mask => {
@@ -306,13 +306,15 @@ export class MaskManager {
       ctx.fillStyle = 'rgba(0, 0, 0, 1.0)';
       ctx.fill();
 
-      // Draw outline
-      ctx.strokeStyle = '#ff4444';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      // Only draw outline and editing visuals if not hidden
+      if (!hideEditingVisuals) {
+        ctx.strokeStyle = '#ff4444';
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
-      // Draw points and handles
-      this.drawMaskPoints(ctx, mask);
+        // Draw points and handles
+        this.drawMaskPoints(ctx, mask);
+      }
 
       ctx.restore();
     });

@@ -314,12 +314,16 @@ class ProjectionMapper {
     // Clear canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Draw masks
-    this.maskManager.drawMasks();
+    // Check if we should hide editing visuals (in presentation mode or when UI is hidden)
+    const app = document.getElementById('app');
+    const hideEditingVisuals = app.classList.contains('hide-ui') || this.isPresentationMode;
 
-    // Draw transform handles for selected sketch
+    // Draw masks (hide red outlines in presentation/hide-ui mode)
+    this.maskManager.drawMasks(hideEditingVisuals);
+
+    // Draw transform handles for selected sketch (only if not hiding UI)
     const selectedSketch = this.sketchManager.getSelectedSketch();
-    if (selectedSketch && this.currentTool === 'select') {
+    if (selectedSketch && this.currentTool === 'select' && !hideEditingVisuals) {
       this.transformManager.drawHandles(selectedSketch);
     }
 
@@ -331,78 +335,127 @@ class ProjectionMapper {
     const content = document.getElementById('properties-content');
 
     content.innerHTML = `
-      <div style="margin-bottom: 12px;">
-        <strong>Sketch ID:</strong> ${sketch.id}
+      <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Sketch ID</div>
+        <div style="font-size: 16px; font-weight: 600;">${sketch.id}</div>
       </div>
-      <div style="margin-bottom: 12px;">
-        <strong>Position:</strong><br>
-        X: ${Math.round(sketch.position.x)}, Y: ${Math.round(sketch.position.y)}
+
+      <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Position</div>
+        <div style="font-size: 14px;">X: ${Math.round(sketch.position.x)}, Y: ${Math.round(sketch.position.y)}</div>
       </div>
-      <div style="margin-bottom: 12px;">
-        <label style="display: block; margin-bottom: 4px;"><strong>Width:</strong></label>
-        <input type="number" id="sketch-width" value="${sketch.size.width}"
-               style="width: 100%; padding: 4px; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border); border-radius: 3px;">
+
+      <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Canvas Size</div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="flex: 1;">
+            <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Width</label>
+            <input type="number" id="sketch-width" value="${sketch.size.width}" min="1" max="4000"
+                   style="width: 100%; padding: 6px; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 14px;">
+          </div>
+          <span style="color: var(--text-secondary); padding-top: 16px;">×</span>
+          <div style="flex: 1;">
+            <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Height</label>
+            <input type="number" id="sketch-height" value="${sketch.size.height}" min="1" max="4000"
+                   style="width: 100%; padding: 6px; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 14px;">
+          </div>
+        </div>
+        <button id="apply-size-btn" class="btn-primary" style="width: 100%; margin-top: 8px; padding: 6px; font-size: 11px;">
+          Apply Canvas Size
+        </button>
       </div>
-      <div style="margin-bottom: 12px;">
-        <label style="display: block; margin-bottom: 4px;"><strong>Height:</strong></label>
-        <input type="number" id="sketch-height" value="${sketch.size.height}"
-               style="width: 100%; padding: 4px; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border); border-radius: 3px;">
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Rotation</label>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <input type="range" id="sketch-rotation-slider" min="-180" max="180" value="${Math.round(sketch.transform.rotation)}"
+                 style="flex: 1; pointer-events: auto;">
+          <input type="number" id="sketch-rotation" value="${Math.round(sketch.transform.rotation)}"
+                 style="width: 60px; padding: 6px; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 14px;">
+          <span style="font-size: 12px; color: var(--text-secondary);">°</span>
+        </div>
       </div>
-      <div style="margin-bottom: 12px;">
-        <label style="display: block; margin-bottom: 4px;"><strong>Rotation (deg):</strong></label>
-        <input type="number" id="sketch-rotation" value="${Math.round(sketch.transform.rotation)}"
-               style="width: 100%; padding: 4px; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border); border-radius: 3px;">
-      </div>
-      <button id="apply-transform-btn" class="btn-primary" style="width: 100%; margin-top: 8px;">
-        Apply Changes
-      </button>
-      <button id="edit-sketch-btn" class="btn-primary" style="width: 100%; margin-top: 8px;">
+
+      <button id="edit-sketch-btn" class="btn-primary" style="width: 100%; margin-bottom: 8px; padding: 10px;">
         Edit Code
       </button>
-      <button id="delete-sketch-btn" class="btn-secondary" style="width: 100%; margin-top: 8px;">
+      <button id="delete-sketch-btn" class="btn-secondary" style="width: 100%; padding: 10px;">
         Delete
       </button>
     `;
 
     panel.classList.remove('hidden');
 
-    // Add event listeners
-    document.getElementById('apply-transform-btn').addEventListener('click', () => {
+    // Sync slider and number input
+    const slider = document.getElementById('sketch-rotation-slider');
+    const input = document.getElementById('sketch-rotation');
+
+    const updateRotation = (value) => {
+      const rotation = parseFloat(value);
+      sketch.transform.rotation = rotation;
+      this.transformManager.applyTransform(sketch);
+      slider.value = rotation;
+      input.value = Math.round(rotation);
+    };
+
+    slider.addEventListener('input', (e) => {
+      e.stopPropagation();
+      updateRotation(e.target.value);
+    });
+
+    slider.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+
+    slider.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    input.addEventListener('input', (e) => {
+      e.stopPropagation();
+      updateRotation(e.target.value);
+    });
+
+    input.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+
+    input.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    // Apply canvas size button
+    document.getElementById('apply-size-btn').addEventListener('click', () => {
       const newWidth = parseInt(document.getElementById('sketch-width').value);
       const newHeight = parseInt(document.getElementById('sketch-height').value);
-      const newRotation = parseFloat(document.getElementById('sketch-rotation').value);
 
-      // Update size
-      sketch.size.width = newWidth;
-      sketch.size.height = newHeight;
+      if (newWidth > 0 && newHeight > 0) {
+        // Update size
+        sketch.size.width = newWidth;
+        sketch.size.height = newHeight;
 
-      // Update rotation
-      sketch.transform.rotation = newRotation;
+        // Update container size
+        sketch.container.style.width = `${newWidth}px`;
+        sketch.container.style.height = `${newHeight}px`;
 
-      // Update container size (which contains the iframe)
-      sketch.container.style.width = `${newWidth}px`;
-      sketch.container.style.height = `${newHeight}px`;
+        // Update corners proportionally
+        sketch.corners = [
+          { x: 0, y: 0 },
+          { x: newWidth, y: 0 },
+          { x: newWidth, y: newHeight },
+          { x: 0, y: newHeight }
+        ];
 
-      // Update corners proportionally
-      sketch.corners = [
-        { x: 0, y: 0 },
-        { x: newWidth, y: 0 },
-        { x: newWidth, y: newHeight },
-        { x: 0, y: newHeight }
-      ];
+        // Recreate the iframe with new canvas dimensions
+        sketch.iframe.srcdoc = this.sketchManager.createIframeHTML(sketch.code, newWidth, newHeight);
 
-      // Apply the transforms
-      this.transformManager.applyTransform(sketch);
+        // Apply transforms
+        this.transformManager.applyTransform(sketch);
+        this.transformManager.applyCornerTransform(sketch);
 
-      // Recreate the iframe with new dimensions
-      const iframe = sketch.iframe;
-      iframe.srcdoc = this.sketchManager.createIframeHTML(newWidth, newHeight);
-      iframe.onload = () => {
-        this.sketchManager.injectSketchIntoIframe(iframe, sketch.code, newWidth, newHeight);
-      };
-
-      // Refresh properties panel
-      this.showPropertiesPanel(sketch);
+        // Refresh properties panel
+        this.showPropertiesPanel(sketch);
+      }
     });
 
     document.getElementById('edit-sketch-btn').addEventListener('click', () => {
@@ -605,9 +658,12 @@ class ProjectionMapper {
       this.sketchManager.fromJSON(project.sketches);
       this.maskManager.fromJSON(project.masks);
 
-      // Append sketch containers to DOM
+      // Append sketch containers to DOM and apply transforms
       this.sketchManager.getAllSketches().forEach(sketch => {
         this.container.appendChild(sketch.container);
+        // Apply the saved transforms
+        this.transformManager.applyTransform(sketch);
+        this.transformManager.applyCornerTransform(sketch);
       });
 
       return true;

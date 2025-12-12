@@ -1,0 +1,324 @@
+:root {
+  --bg-dark: #1a1a1a;
+  --bg-medium: #2a2a2a;
+  --bg-light: #3a3a3a;
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --accent: #4a9eff;
+  --accent-hover: #6bb0ff;
+  --border: #444444;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background-color: var(--bg-medium);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s ease-out;
+}
+
+.tool-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.tool-btn:hover {
+  background-color: var(--bg-light);
+  color: var(--text-primary);
+}
+
+.tool-btn.active {
+  background-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border);
+  margin: 0 4px;
+}
+
+/* Main Container */
+.main-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background-color: #000000;
+}
+
+#main-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+
+#main-canvas.cursor-move {
+  cursor: move;
+}
+
+#main-canvas.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Properties Panel */
+.properties-panel {
+  position: absolute;
+  top: 60px;
+  right: 12px;
+  width: 280px;
+  background-color: var(--bg-medium);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  transition: opacity 0.2s;
+  z-index: 200;
+  pointer-events: auto;
+}
+
+.properties-panel h3 {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.properties-panel.hidden {
+  display: none;
+}
+
+/* Editor Panel */
+.editor-panel {
+  position: absolute;
+  top: 60px;
+  left: 12px;
+  width: 600px;
+  height: calc(100vh - 80px);
+  background-color: var(--bg-medium);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.2s;
+  z-index: 200;
+  pointer-events: auto;
+}
+
+.editor-panel.hidden {
+  display: none;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.editor-header h3 {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+#code-editor {
+  flex: 1;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  border: none;
+  padding: 16px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+}
+
+/* Buttons */
+.btn-primary,
+.btn-secondary {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+  background-color: var(--bg-light);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--border);
+  color: var(--text-primary);
+}
+
+/* Fullscreen Mode */
+#app.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+}
+
+#app.fullscreen .toolbar {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+#app.fullscreen.hide-ui .toolbar {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  border-bottom: none;
+  height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+#app.fullscreen.hide-ui .properties-panel,
+#app.fullscreen.hide-ui .editor-panel {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out;
+}
+
+#app.fullscreen.hide-cursor,
+#app.fullscreen.hide-cursor * {
+  cursor: none !important;
+}
+
+#app.fullscreen.presentation-mode .toolbar {
+  display: none !important;
+  border-bottom: none !important;
+}
+
+#app.fullscreen.presentation-mode .properties-panel,
+#app.fullscreen.presentation-mode .editor-panel {
+  display: none !important;
+}
+
+#app.fullscreen.presentation-mode .main-container {
+  top: 0 !important;
+  height: 100vh !important;
+}
+
+/* Canvas overlays */
+[id^="sketch-"] {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+}
+
+[id^="sketch-"].selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+[id^="sketch-"] canvas {
+  display: block;
+}
+
+/* Handle for corner transform */
+.transform-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: var(--accent);
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: move;
+  pointer-events: all;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+}
+
+.transform-handle:hover {
+  background-color: var(--accent-hover);
+  width: 14px;
+  height: 14px;
+}
+
+/* Mask points */
+.mask-point {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #ff4444;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+}
+
+.mask-point:hover {
+  background-color: #ff6666;
+  width: 12px;
+  height: 12px;
+}
+
+.mask-point.control-point {
+  background-color: #44ff44;
+}
+
+.mask-point.control-point:hover {
+  background-color: #66ff66;
+}

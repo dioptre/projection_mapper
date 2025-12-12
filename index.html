@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Projection Mapper</title>
+  </head>
+  <body>
+    <div id="app">
+      <div id="toolbar" class="toolbar">
+        <button id="tool-select" class="tool-btn active" title="Select & Transform">
+          <svg width="20" height="20" viewBox="0 0 20 20"><path d="M2 2 L2 18 L8 13 L11 18 L13 17 L10 12 L18 12 Z" fill="currentColor"/></svg>
+        </button>
+        <button id="tool-mask" class="tool-btn" title="Blackout Mask">
+          <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <button id="tool-add-sketch" class="tool-btn" title="Add Sketch">
+          <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 4 L10 16 M4 10 L16 10" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <div class="toolbar-separator"></div>
+        <button id="btn-fullscreen" class="tool-btn" title="Toggle Fullscreen">
+          <svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 3 L3 8 M3 3 L8 3 M17 3 L12 3 M17 3 L17 8 M3 17 L3 12 M3 17 L8 17 M17 17 L17 12 M17 17 L12 17" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+        </button>
+        <button id="btn-save" class="tool-btn" title="Save Project">
+          <svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 4 L4 16 L16 16 L16 4 L13 4 L13 8 L7 8 L7 4 Z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+        </button>
+        <button id="btn-load" class="tool-btn" title="Load Project">
+          <svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 7 L4 16 L16 16 L16 7 M10 3 L10 12 M7 9 L10 12 L13 9" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+        </button>
+      </div>
+
+      <div id="main-container" class="main-container">
+        <canvas id="main-canvas"></canvas>
+      </div>
+
+      <div id="properties-panel" class="properties-panel hidden">
+        <h3>Properties</h3>
+        <div id="properties-content"></div>
+      </div>
+
+      <div id="editor-panel" class="editor-panel hidden">
+        <div class="editor-header">
+          <h3>Sketch Editor</h3>
+          <button id="editor-apply" class="btn-primary">Apply</button>
+          <button id="editor-close" class="btn-secondary">Close</button>
+        </div>
+        <textarea id="code-editor" spellcheck="false"></textarea>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

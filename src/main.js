@@ -170,11 +170,21 @@ class ProjectionMapper {
       toolBtn.classList.add('active');
     }
 
-    // In interact mode, disable canvas pointer events so clicks pass through to iframes
+    // In interact mode, disable canvas pointer events and enable sketch container pointer events
     if (tool === 'interact') {
       this.canvas.style.pointerEvents = 'none';
+      // Enable pointer events on all sketch containers so they can receive clicks
+      const sketches = this.sketchManager.getAllSketches();
+      sketches.forEach(sketch => {
+        sketch.container.style.pointerEvents = 'auto';
+      });
     } else {
       this.canvas.style.pointerEvents = 'auto';
+      // Disable pointer events on sketch containers in other modes
+      const sketches = this.sketchManager.getAllSketches();
+      sketches.forEach(sketch => {
+        sketch.container.style.pointerEvents = 'none';
+      });
     }
   }
 

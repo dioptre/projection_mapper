@@ -109,15 +109,15 @@ body {
   border-radius: 6px;
   padding: 16px;
   max-height: calc(100vh - 80px);
-  overflow-y: auto;
+  overflow: hidden;
   transition: opacity 0.2s;
   z-index: 200;
   pointer-events: auto;
 }
 
 .properties-panel h3 {
-  margin-bottom: 12px;
-  font-size: 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
   color: var(--text-secondary);
@@ -125,6 +125,130 @@ body {
 
 .properties-panel.hidden {
   display: none;
+}
+
+/* Properties Panel Sections */
+.prop-section {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.prop-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.prop-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.prop-value {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+/* Size Inputs */
+.size-input-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.size-input-wrapper:last-of-type {
+  margin-bottom: 0;
+}
+
+.input-label {
+  flex-shrink: 0;
+  width: 60px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.size-input {
+  flex: 1;
+  padding: 10px 8px;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 14px;
+  font-family: monospace;
+  box-sizing: border-box;
+}
+
+.size-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Rotation Control */
+.rotation-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 30px);
+  padding-left: 10px;
+}
+
+.rotation-control input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 80px);
+  pointer-events: auto;
+  margin-right: 10px;
+}
+
+.rotation-control input[type="number"] {
+  width: 55px;
+  flex-shrink: 0;
+  padding: 8px 0px;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.rotation-control input[type="number"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.rotation-control .unit {
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-width: 10px;
+  flex-shrink: 0;
+}
+
+/* Properties Actions */
+.prop-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.prop-actions button {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
 }
 
 /* Editor Panel */

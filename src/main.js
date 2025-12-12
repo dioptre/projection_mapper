@@ -393,53 +393,41 @@ class ProjectionMapper {
     const content = document.getElementById('properties-content');
 
     content.innerHTML = `
-      <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
-        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Sketch ID</div>
-        <div style="font-size: 16px; font-weight: 600;">${sketch.id}</div>
+      <div class="prop-section">
+        <div class="prop-label">Sketch ID</div>
+        <div class="prop-value">${sketch.id}</div>
       </div>
 
-      <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
-        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Position</div>
-        <div style="font-size: 14px;">X: ${Math.round(sketch.position.x)}, Y: ${Math.round(sketch.position.y)}</div>
+      <div class="prop-section">
+        <div class="prop-label">Position</div>
+        <div class="prop-value">X: ${Math.round(sketch.position.x)}, Y: ${Math.round(sketch.position.y)}</div>
       </div>
 
-      <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
-        <div style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Canvas Size</div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <div style="flex: 1;">
-            <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Width</label>
-            <input type="number" id="sketch-width" value="${sketch.size.width}" min="1" max="4000"
-                   style="width: 100%; padding: 6px; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 14px;">
-          </div>
-          <span style="color: var(--text-secondary); padding-top: 16px;">×</span>
-          <div style="flex: 1;">
-            <label style="display: block; font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">Height</label>
-            <input type="number" id="sketch-height" value="${sketch.size.height}" min="1" max="4000"
-                   style="width: 100%; padding: 6px; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 14px;">
-          </div>
+      <div class="prop-section">
+        <div class="prop-label">Canvas Size</div>
+        <div class="size-input-wrapper">
+          <label class="input-label">Width</label>
+          <input type="number" id="sketch-width" value="${sketch.size.width}" min="1" max="4000" class="size-input">
         </div>
-        <button id="apply-size-btn" class="btn-primary" style="width: 100%; margin-top: 8px; padding: 6px; font-size: 11px;">
-          Apply Canvas Size
-        </button>
-      </div>
-
-      <div style="margin-bottom: 20px;">
-        <label style="display: block; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Rotation</label>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <input type="range" id="sketch-rotation-slider" min="-180" max="180" value="${Math.round(sketch.transform.rotation)}"
-                 style="flex: 1; pointer-events: auto;">
-          <input type="number" id="sketch-rotation" value="${Math.round(sketch.transform.rotation)}"
-                 style="width: 60px; padding: 6px; background: var(--bg-dark); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 14px;">
-          <span style="font-size: 12px; color: var(--text-secondary);">°</span>
+        <div class="size-input-wrapper">
+          <label class="input-label">Height</label>
+          <input type="number" id="sketch-height" value="${sketch.size.height}" min="1" max="4000" class="size-input">
         </div>
       </div>
 
-      <button id="edit-sketch-btn" class="btn-primary" style="width: 100%; margin-bottom: 8px; padding: 10px;">
-        Edit Code
-      </button>
-      <button id="delete-sketch-btn" class="btn-secondary" style="width: 100%; padding: 10px;">
-        Delete
-      </button>
+      <div class="prop-section">
+        <div class="prop-label">Rotation</div>
+        <div class="rotation-control">
+          <input type="range" id="sketch-rotation-slider" min="-180" max="180" value="${Math.round(sketch.transform.rotation)}">
+          <input type="number" id="sketch-rotation" value="${Math.round(sketch.transform.rotation)}" min="-180" max="180">
+          <span class="unit">°</span>
+        </div>
+      </div>
+
+      <div class="prop-actions">
+        <button id="edit-sketch-btn" class="btn-primary">Edit Code</button>
+        <button id="delete-sketch-btn" class="btn-secondary">Delete</button>
+      </div>
     `;
 
     panel.classList.remove('hidden');
@@ -483,7 +471,8 @@ class ProjectionMapper {
     });
 
     // Apply canvas size button
-    document.getElementById('apply-size-btn').addEventListener('click', () => {
+    // Auto-apply size changes on blur
+    const applySize = () => {
       const newWidth = parseInt(document.getElementById('sketch-width').value);
       const newHeight = parseInt(document.getElementById('sketch-height').value);
 
@@ -510,10 +499,17 @@ class ProjectionMapper {
         // Apply transforms
         this.transformManager.applyTransform(sketch);
         this.transformManager.applyCornerTransform(sketch);
-
-        // Refresh properties panel
-        this.showPropertiesPanel(sketch);
       }
+    };
+
+    document.getElementById('sketch-width').addEventListener('blur', applySize);
+    document.getElementById('sketch-width').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') applySize();
+    });
+
+    document.getElementById('sketch-height').addEventListener('blur', applySize);
+    document.getElementById('sketch-height').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') applySize();
     });
 
     document.getElementById('edit-sketch-btn').addEventListener('click', () => {

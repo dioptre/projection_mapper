@@ -30,10 +30,8 @@ class ProjectionMapper {
     // Animation loop
     this.animate();
 
-    // Try to load from localStorage first, otherwise add default sketch
-    if (!this.loadFromLocalStorage()) {
-      this.addDefaultSketch();
-    }
+    // Try to load from localStorage (don't add default sketch if empty)
+    this.loadFromLocalStorage();
 
     // Auto-save to localStorage every 5 seconds
     setInterval(() => this.saveToLocalStorage(), 5000);
@@ -104,6 +102,10 @@ class ProjectionMapper {
       this.setTool('select');
     });
 
+    document.getElementById('tool-interact').addEventListener('click', () => {
+      this.setTool('interact');
+    });
+
     document.getElementById('tool-mask').addEventListener('click', () => {
       this.setTool('mask');
     });
@@ -123,6 +125,10 @@ class ProjectionMapper {
 
     document.getElementById('btn-load').addEventListener('click', () => {
       this.loadProject();
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      this.resetProject();
     });
   }
 
@@ -163,9 +169,21 @@ class ProjectionMapper {
     if (toolBtn) {
       toolBtn.classList.add('active');
     }
+
+    // In interact mode, disable canvas pointer events so clicks pass through to iframes
+    if (tool === 'interact') {
+      this.canvas.style.pointerEvents = 'none';
+    } else {
+      this.canvas.style.pointerEvents = 'auto';
+    }
   }
 
   onMouseDown(e) {
+    // Skip event handling in interact mode - let events pass to iframes
+    if (this.currentTool === 'interact') {
+      return;
+    }
+
     const rect = this.canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -247,6 +265,11 @@ class ProjectionMapper {
   }
 
   onMouseMove(e) {
+    // Skip event handling in interact mode - let events pass to iframes
+    if (this.currentTool === 'interact') {
+      return;
+    }
+
     const rect = this.canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -260,6 +283,11 @@ class ProjectionMapper {
   }
 
   onMouseUp(e) {
+    // Skip event handling in interact mode - let events pass to iframes
+    if (this.currentTool === 'interact') {
+      return;
+    }
+
     if (this.currentTool === 'select') {
       this.transformManager.endDrag();
       this.maskManager.endDrag(); // Also end mask dragging in select mode
@@ -501,14 +529,11 @@ class ProjectionMapper {
   }
 
   showSketchDialog() {
-    const code = prompt('Enter p5.js sketch code (or leave empty for default):');
-
-    if (code !== null) {
-      const sketchCode = code.trim() || this.getDefaultSketchCode();
-      const sketch = this.sketchManager.createSketch(sketchCode, 100, 100, 400, 300);
-      if (sketch) {
-        this.container.appendChild(sketch.container);
-      }
+    // Just add sketch with default code, no prompt
+    const sketchCode = this.getDefaultSketchCode();
+    const sketch = this.sketchManager.createSketch(sketchCode, 100, 100, 400, 400);
+    if (sketch) {
+      this.container.appendChild(sketch.container);
     }
   }
 
@@ -521,44 +546,101 @@ class ProjectionMapper {
   }
 
   getDefaultSketchCode() {
-    return `function setup() {
-  createCanvas(720, 400);
-  angleMode(DEGREES);
-  background('steelblue');
-  strokeWeight(4);
+    return `let gravity;
+let drops = [];
+let gravitySlider;
+let sizeSlider;
+let tensionSlider;
+let frictionSlider;
+let dropSize = 20;
+let repulsionForce = 0.5;
+let friction = 0.9;
 
-  fill(200, 200, 255);
-  stroke(20, 20, 100);
-  square(20, 20, 100);
+function setup() {
+  createCanvas(400, 400);
 
-  stroke(100, 20, 20);
-  rect(100, 40, 200, 100);
+  // Create sliders positioned at the top
+  gravitySlider = createSlider(0, 1, 0.25, 0.05);
+  gravitySlider.position(10, 10);
+  gravitySlider.style('width', '80px');
 
-  colorMode(HSB);
-  fill(120, 70, 90);
-  stroke(120, 60, 30);
-  ellipse(540, 100, 300, 100);
+  sizeSlider = createSlider(1, 50, 20, 1);
+  sizeSlider.position(10, 30);
+  sizeSlider.style('width', '80px');
 
-  fill(300, 90, 30);
+  tensionSlider = createSlider(0, 2, 0.5, 0.05);
+  tensionSlider.position(10, 50);
+  tensionSlider.style('width', '80px');
+
+  frictionSlider = createSlider(0, 1, 0.9, 0.05);
+  frictionSlider.position(10, 70);
+  frictionSlider.style('width', '80px');
+
+  for (let i = 0; i < 250; i++) {
+    drops.push(new Drop());
+  }
+
   noStroke();
-  circle(560, 100, 100);
+}
 
-  colorMode(HSL);
-  fill(120, 70, 90);
-  stroke(120, 60, 30);
-  arc(540, 100, 300, 100, 180, 360, CHORD);
+function draw() {
+  background(0);
 
-  push();
-  colorMode(RGB);
-  stroke(20, 10, 80);
-  line(20, 200, 200, 350);
-  pop();
+  gravity = createVector(0, gravitySlider.value());
+  dropSize = sizeSlider.value();
+  repulsionForce = tensionSlider.value();
+  friction = frictionSlider.value();
 
-  triangle(250, 350, 350, 200, 450, 350);
+  drops.forEach(drop => {
+    drop.applyForce(gravity);
+    drops.forEach(otherDrop => {
+      drop.applyForce(drop.interaction(otherDrop));
+    });
 
-  stroke('#EFD8D8');
-  noFill();
-  quad(500, 250, 550, 200, 700, 300, 650, 350);
+    drop.show();
+    drop.update();
+  });
+}
+
+class Drop {
+  constructor() {
+    this.pos = createVector(random(width), random(height));
+    this.vel = createVector(0, 0);
+    this.acc = createVector(0, 0);
+  }
+
+  applyForce(force) {
+    this.acc.add(force);
+  }
+
+  interaction(other) {
+    let force = p5.Vector.sub(this.pos, other.pos);
+    let distance = force.mag();
+    distance = constrain(distance, 1, 50);
+
+    let strength = repulsionForce / (distance * distance);
+    force.setMag(strength);
+
+    return force;
+  }
+
+  update() {
+    this.vel.add(this.acc);
+    this.vel.mult(friction);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+
+    // Wrap around edges
+    if (this.pos.x < 0) this.pos.x = width;
+    if (this.pos.x > width) this.pos.x = 0;
+    if (this.pos.y < 0) this.pos.y = height;
+    if (this.pos.y > height) this.pos.y = 0;
+  }
+
+  show() {
+    fill(255);
+    circle(this.pos.x, this.pos.y, dropSize);
+  }
 }`;
   }
 
@@ -691,6 +773,34 @@ class ProjectionMapper {
       console.error('Error loading from localStorage:', error);
       return false;
     }
+  }
+
+  resetProject() {
+    // Confirm with user
+    if (!confirm('Reset project? This will delete all sketches and masks. This cannot be undone.')) {
+      return;
+    }
+
+    // Remove all sketches
+    const sketches = this.sketchManager.getAllSketches();
+    sketches.forEach(sketch => {
+      this.sketchManager.removeSketch(sketch.id);
+    });
+
+    // Clear all masks
+    this.maskManager.masks = [];
+    this.maskManager.currentMask = null;
+    this.maskManager.selectedMask = null;
+
+    // Clear localStorage
+    localStorage.removeItem('projection-map-project');
+
+    // Hide panels
+    this.hidePropertiesPanel();
+    document.getElementById('editor-panel').classList.add('hidden');
+
+    // Reset tool to select
+    this.setTool('select');
   }
 }
 

@@ -259,6 +259,7 @@ input[type="range"]::-moz-range-thumb:hover {
   width: 100vw;
   height: 100vh;
   z-index: 9999;
+  background-color: #000000;
 }
 
 #app.fullscreen .main-container {
@@ -275,6 +276,8 @@ input[type="range"]::-moz-range-thumb:hover {
   left: 0 !important;
   width: 100vw !important;
   transition: opacity 0.3s ease-out;
+  background-color: #000000 !important;
+  border-bottom-color: #000000 !important;
 }
 
 #app.fullscreen.hide-ui .toolbar {

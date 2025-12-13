@@ -37,6 +37,15 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Verify build output
+        run: |
+          echo "=== Checking dist folder contents ==="
+          ls -la dist/
+          echo "=== Checking dist/assets folder ==="
+          ls -la dist/assets/
+          echo "=== Checking first 15 lines of dist/index.html ==="
+          head -15 dist/index.html
+
       - name: Add .nojekyll to dist
         run: cp .nojekyll dist/.nojekyll
 

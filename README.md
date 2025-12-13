@@ -2,6 +2,10 @@
 
 A web-based projection mapping tool that allows you to create, transform, and mask p5.js sketches in real-time. Perfect for VJ performances, interactive installations, and projection mapping projects.
 
+## Demo
+
+https://dioptre.github.io/projection_mapper/
+
 ## Features
 
 ### Core Functionality

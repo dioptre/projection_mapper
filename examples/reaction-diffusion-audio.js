@@ -21,6 +21,14 @@ let bassLevel = 0;
 let midLevel = 0;
 let highLevel = 0;
 
+// Fade and reset system
+let fadeOpacity = 0;
+let fadeState = 'visible'; // 'visible', 'fading_out', 'black', 'fading_in'
+let fadeSpeed = 1 / (2 * 60); // 2 second fades at 60fps
+let resetTimer = 0;
+let resetInterval = 30 * 60; // Reset every 30 seconds
+let lastChangeAmount = 0;
+
 function setup() {
   createCanvas(400, 400); // Reduced from 800x800 for better performance
   pixelDensity(1);
@@ -56,6 +64,35 @@ function setup() {
   }
 
   noSmooth(); // Disable anti-aliasing for sharper rendering
+}
+
+function resetPattern() {
+  // Clear grid
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) {
+      grid[x][y] = { a: 1, b: 0 };
+    }
+  }
+
+  // Add multiple initial seeds for more interesting patterns
+  for (let s = 0; s < 5; s++) {
+    let cx = random(width * 0.2, width * 0.8);
+    let cy = random(height * 0.2, height * 0.8);
+    let size = random(5, 15);
+    for (let i = -size; i <= size; i++) {
+      for (let j = -size; j <= size; j++) {
+        let x = int(cx + i);
+        let y = int(cy + j);
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+          if (dist(i, j, 0, 0) < size) {
+            grid[x][y].b = 1;
+          }
+        }
+      }
+    }
+  }
+
+  resetTimer = 0;
 }
 
 function draw() {
@@ -109,10 +146,37 @@ function draw() {
     }
   }
 
-  // Run multiple iterations per frame for faster evolution
-  for (let n = 0; n < 15; n++) { // Increased from 10 to 15
-    // Compute reaction-diffusion
-    for (let x = 1; x < width - 1; x++) {
+  // Handle fade state machine
+  if (fadeState === 'visible') {
+    resetTimer++;
+    if (resetTimer >= resetInterval) {
+      fadeState = 'fading_out';
+      fadeOpacity = 0;
+    }
+  } else if (fadeState === 'fading_out') {
+    fadeOpacity += fadeSpeed;
+    if (fadeOpacity >= 1) {
+      fadeOpacity = 1;
+      fadeState = 'black';
+    }
+  } else if (fadeState === 'black') {
+    resetPattern();
+    fadeState = 'fading_in';
+    fadeOpacity = 1;
+  } else if (fadeState === 'fading_in') {
+    fadeOpacity -= fadeSpeed;
+    if (fadeOpacity <= 0) {
+      fadeOpacity = 0;
+      fadeState = 'visible';
+    }
+  }
+
+  // Only run simulation if not completely black
+  if (fadeState !== 'black') {
+    // Run multiple iterations per frame for faster evolution
+    for (let n = 0; n < 15; n++) { // Increased from 10 to 15
+      // Compute reaction-diffusion
+      for (let x = 1; x < width - 1; x++) {
       for (let y = 1; y < height - 1; y++) {
         let a = grid[x][y].a;
         let b = grid[x][y].b;
@@ -151,10 +215,11 @@ function draw() {
       }
     }
 
-    // Swap grids
-    let temp = grid;
-    grid = next;
-    next = temp;
+      // Swap grids
+      let temp = grid;
+      grid = next;
+      next = temp;
+    }
   }
 
   // Render with better contrast and coloring
@@ -194,8 +259,15 @@ function draw() {
   }
   updatePixels();
 
+  // Apply fade overlay
+  if (fadeOpacity > 0) {
+    fill(0, fadeOpacity * 255);
+    noStroke();
+    rect(0, 0, width, height);
+  }
+
   // Display audio info if active
-  if (micActive) {
+  if (micActive && fadeState === 'visible') {
     fill(255);
     noStroke();
     textSize(12);
@@ -273,22 +345,14 @@ function keyPressed() {
     k = 0.059;
   }
 
-  // Clear
+  // Reset pattern
+  if (key === 'r' || key === 'R') {
+    fadeState = 'fading_out';
+    fadeOpacity = 0;
+  }
+
+  // Clear (instant reset without fade)
   if (key === 'c' || key === 'C') {
-    for (let x = 0; x < width; x++) {
-      for (let y = 0; y < height; y++) {
-        grid[x][y] = { a: 1, b: 0 };
-      }
-    }
-    // Re-add center seed
-    let cx = width / 2;
-    let cy = height / 2;
-    for (let i = -10; i <= 10; i++) {
-      for (let j = -10; j <= 10; j++) {
-        if (cx + i >= 0 && cx + i < width && cy + j >= 0 && cy + j < height) {
-          grid[int(cx + i)][int(cy + j)].b = 1;
-        }
-      }
-    }
+    resetPattern();
   }
 }

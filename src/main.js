@@ -265,7 +265,7 @@ class ProjectionMapper {
 
     if (segmentHit) {
       // Add bezier point on segment
-      this.maskManager.insertPointOnSegment(x, y, segmentHit.segmentIndex);
+      this.maskManager.insertPointOnSegment(x, y, segmentHit.maskIndex, segmentHit.segmentIndex);
       return;
     }
 
@@ -326,6 +326,11 @@ class ProjectionMapper {
         } else if (selectedMask) {
           this.maskManager.deleteMask(selectedMask.id);
           this.maskManager.selectMaskByIndex(null);
+        }
+      } else if (this.currentTool === 'mask') {
+        // Delete selected point in mask
+        if (this.maskManager.selectedPoint) {
+          this.maskManager.deleteSelectedPoint();
         }
       }
     }

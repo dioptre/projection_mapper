@@ -42,10 +42,12 @@ export class MaskManager {
     return point;
   }
 
-  insertPointOnSegment(x, y, segmentIndex) {
-    if (!this.currentMask) return null;
+  insertPointOnSegment(x, y, maskIndex, segmentIndex) {
+    // Work with any mask (current or existing)
+    const mask = this.masks[maskIndex];
+    if (!mask) return null;
 
-    const points = this.currentMask.points;
+    const points = mask.points;
     if (segmentIndex < 0 || segmentIndex >= points.length) return null;
 
     const point = {
@@ -87,6 +89,23 @@ export class MaskManager {
       return true;
     }
     return false;
+  }
+
+  deleteSelectedPoint() {
+    if (!this.selectedPoint || this.selectedPoint.type !== 'point') {
+      return false;
+    }
+
+    const mask = this.masks[this.selectedPoint.maskIndex];
+    if (!mask || mask.points.length <= 3) {
+      // Don't delete if it would leave fewer than 3 points (minimum for a mask)
+      return false;
+    }
+
+    // Remove the point
+    mask.points.splice(this.selectedPoint.pointIndex, 1);
+    this.selectedPoint = null;
+    return true;
   }
 
   hitTestPoint(x, y) {
@@ -208,7 +227,8 @@ export class MaskManager {
   }
 
   endDrag() {
-    this.selectedPoint = null;
+    // Keep selectedPoint set so Delete key can work on it
+    // Only clear the dragging flags
     this.isDragging = false;
     this.isDraggingMask = false;
   }

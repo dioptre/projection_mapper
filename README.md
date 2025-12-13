@@ -39,32 +39,27 @@ npm run preview
 
 This project includes automatic GitHub Pages deployment via GitHub Actions.
 
-#### Setup Instructions
+The site is configured to deploy automatically when you push to the `master` branch.
 
-1. **Push to your GitHub repository**
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/dioptre/projection_mapper.git
-   git push -u origin main
-   ```
+**Your live site:** `https://dioptre.github.io/projection_mapper/`
 
-2. **Enable GitHub Pages in repository settings**
-   - Go to https://github.com/dioptre/projection_mapper/settings/pages
-   - Select **Deploy from a branch**
-   - Choose **Branch: main** → **/(root)** folder
-   - Click **Save**
+#### How It Works
 
-3. **The site will auto-deploy**
-   - Push code to `main` branch
-   - GitHub Actions will build and deploy automatically
-   - Your site will be live at: `https://dioptre.github.io/projection_mapper/`
+1. GitHub Actions workflow (`.github/workflows/deploy.yml`) triggers on push
+2. Automatically builds the project with `npm run build`
+3. Deploys the `dist` folder to GitHub Pages
+4. Site updates within minutes of each push
+
+#### Enable GitHub Pages (if not already enabled)
+
+- Go to https://github.com/dioptre/projection_mapper/settings/pages
+- Select **Deploy from a branch**
+- Choose **Branch: gh-pages** (created by the workflow)
+- Click **Save**
 
 #### Manual Deployment
 
-If you prefer manual deployment:
+If you prefer to deploy manually without GitHub Actions:
 
 ```bash
 npm run build

@@ -25,12 +25,16 @@ body {
 #app {
   width: 100vw;
   height: 100vh;
-  display: flex;
-  flex-direction: column;
+  position: relative;
 }
 
 /* Toolbar */
 .toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
   display: flex;
   gap: 4px;
   padding: 8px;
@@ -73,9 +77,12 @@ body {
 
 /* Main Container */
 .main-container {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: visible;
   background-color: #000000;
 }
 
@@ -87,7 +94,7 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 100;
+  z-index: 160;
 }
 
 #main-canvas.cursor-move {
@@ -412,10 +419,6 @@ input[type="range"]::-moz-range-thumb:hover {
   border-bottom: none !important;
 }
 
-#app.fullscreen.hide-ui .main-container {
-  top: 50px !important;
-  height: calc(100vh - 50px) !important;
-}
 
 #app.fullscreen.hide-ui .properties-panel,
 #app.fullscreen.hide-ui .editor-panel {
@@ -439,16 +442,11 @@ input[type="range"]::-moz-range-thumb:hover {
   display: none !important;
 }
 
-#app.fullscreen.presentation-mode .main-container {
-  top: 0 !important;
-  height: 100vh !important;
-}
-
 /* Canvas overlays */
 [id^="sketch-"] {
   position: absolute;
   pointer-events: none;
-  z-index: 10;
+  z-index: 150;
 }
 
 [id^="sketch-"].selected {

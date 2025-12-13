@@ -35,6 +35,42 @@ npm run build
 npm run preview
 ```
 
+### Deploy to GitHub Pages
+
+This project includes automatic GitHub Pages deployment via GitHub Actions.
+
+#### Setup Instructions
+
+1. **Push to your GitHub repository**
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   git branch -M main
+   git remote add origin https://github.com/dioptre/projection_mapper.git
+   git push -u origin main
+   ```
+
+2. **Enable GitHub Pages in repository settings**
+   - Go to https://github.com/dioptre/projection_mapper/settings/pages
+   - Select **Deploy from a branch**
+   - Choose **Branch: main** → **/(root)** folder
+   - Click **Save**
+
+3. **The site will auto-deploy**
+   - Push code to `main` branch
+   - GitHub Actions will build and deploy automatically
+   - Your site will be live at: `https://dioptre.github.io/projection_mapper/`
+
+#### Manual Deployment
+
+If you prefer manual deployment:
+
+```bash
+npm run build
+# Deploy the 'dist' folder to GitHub Pages
+```
+
 ## Usage
 
 ### Toolbar

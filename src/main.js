@@ -404,18 +404,6 @@ class ProjectionMapper {
       </div>
 
       <div class="prop-section">
-        <div class="prop-label">Canvas Size</div>
-        <div class="size-input-wrapper">
-          <label class="input-label">Width</label>
-          <input type="number" id="sketch-width" value="${sketch.size.width}" min="1" max="4000" class="size-input">
-        </div>
-        <div class="size-input-wrapper">
-          <label class="input-label">Height</label>
-          <input type="number" id="sketch-height" value="${sketch.size.height}" min="1" max="4000" class="size-input">
-        </div>
-      </div>
-
-      <div class="prop-section">
         <div class="prop-label">Rotation</div>
         <div class="rotation-control">
           <input type="range" id="sketch-rotation-slider" min="-180" max="180" value="${Math.round(sketch.transform.rotation)}">
@@ -468,48 +456,6 @@ class ProjectionMapper {
 
     input.addEventListener('click', (e) => {
       e.stopPropagation();
-    });
-
-    // Apply canvas size button
-    // Auto-apply size changes on blur
-    const applySize = () => {
-      const newWidth = parseInt(document.getElementById('sketch-width').value);
-      const newHeight = parseInt(document.getElementById('sketch-height').value);
-
-      if (newWidth > 0 && newHeight > 0) {
-        // Update size
-        sketch.size.width = newWidth;
-        sketch.size.height = newHeight;
-
-        // Update container size
-        sketch.container.style.width = `${newWidth}px`;
-        sketch.container.style.height = `${newHeight}px`;
-
-        // Update corners proportionally
-        sketch.corners = [
-          { x: 0, y: 0 },
-          { x: newWidth, y: 0 },
-          { x: newWidth, y: newHeight },
-          { x: 0, y: newHeight }
-        ];
-
-        // Recreate the iframe with new canvas dimensions
-        sketch.iframe.srcdoc = this.sketchManager.createIframeHTML(sketch.code, newWidth, newHeight);
-
-        // Apply transforms
-        this.transformManager.applyTransform(sketch);
-        this.transformManager.applyCornerTransform(sketch);
-      }
-    };
-
-    document.getElementById('sketch-width').addEventListener('blur', applySize);
-    document.getElementById('sketch-width').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') applySize();
-    });
-
-    document.getElementById('sketch-height').addEventListener('blur', applySize);
-    document.getElementById('sketch-height').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') applySize();
     });
 
     document.getElementById('edit-sketch-btn').addEventListener('click', () => {
@@ -769,9 +715,8 @@ class Drop {
       // Append sketch containers to DOM and apply transforms
       this.sketchManager.getAllSketches().forEach(sketch => {
         this.container.appendChild(sketch.container);
-        // Apply the saved transforms
+        // Apply the saved transforms (applyTransform handles both rotation and warping)
         this.transformManager.applyTransform(sketch);
-        this.transformManager.applyCornerTransform(sketch);
       });
 
       return true;

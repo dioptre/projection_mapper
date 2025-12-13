@@ -14,29 +14,25 @@ export class TransformManager {
 
     const ctx = this.ctx;
     const pos = sketch.position;
-    const rotation = sketch.transform.rotation * (Math.PI / 180); // Convert to radians
+    const rotation = sketch.transform.rotation * (Math.PI / 180);
+    const size = sketch.size;
+    const centerX = size.width / 2;
+    const centerY = size.height / 2;
 
-    // Calculate center point for rotation
-    const centerX = pos.x + sketch.size.width / 2;
-    const centerY = pos.y + sketch.size.height / 2;
-
-    // Helper function to rotate a point around center
-    const rotatePoint = (x, y) => {
-      const dx = x - centerX;
-      const dy = y - centerY;
+    // Apply rotation to the corners for display purposes
+    const displayCorners = sketch.corners.map(corner => {
+      const dx = corner.x - centerX;
+      const dy = corner.y - centerY;
+      const rotatedX = centerX + dx * Math.cos(rotation) - dy * Math.sin(rotation);
+      const rotatedY = centerY + dx * Math.sin(rotation) + dy * Math.cos(rotation);
       return {
-        x: centerX + dx * Math.cos(rotation) - dy * Math.sin(rotation),
-        y: centerY + dx * Math.sin(rotation) + dy * Math.cos(rotation)
+        x: pos.x + rotatedX,
+        y: pos.y + rotatedY
       };
-    };
-
-    // Transform corner positions by rotation
-    const transformedCorners = sketch.corners.map(corner => {
-      return rotatePoint(pos.x + corner.x, pos.y + corner.y);
     });
 
     // Draw corner handles
-    transformedCorners.forEach((corner, index) => {
+    displayCorners.forEach((corner, index) => {
       ctx.beginPath();
       ctx.arc(
         corner.x,
@@ -52,13 +48,13 @@ export class TransformManager {
       ctx.stroke();
     });
 
-    // Draw lines connecting corners
+    // Draw lines connecting corners (dotted border)
     ctx.beginPath();
     ctx.strokeStyle = '#4a9eff';
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
 
-    transformedCorners.forEach((corner, index) => {
+    displayCorners.forEach((corner, index) => {
       if (index === 0) {
         ctx.moveTo(corner.x, corner.y);
       } else {
@@ -74,29 +70,28 @@ export class TransformManager {
     if (!sketch) return null;
 
     const pos = sketch.position;
-    const rotation = sketch.transform.rotation * (Math.PI / 180);
     const hitRadius = 10;
+    const rotation = sketch.transform.rotation * (Math.PI / 180);
+    const size = sketch.size;
+    const centerX = size.width / 2;
+    const centerY = size.height / 2;
 
-    // Calculate center point for rotation
-    const centerX = pos.x + sketch.size.width / 2;
-    const centerY = pos.y + sketch.size.height / 2;
-
-    // Helper function to rotate a point around center
-    const rotatePoint = (px, py) => {
-      const dx = px - centerX;
-      const dy = py - centerY;
-      return {
-        x: centerX + dx * Math.cos(rotation) - dy * Math.sin(rotation),
-        y: centerY + dx * Math.sin(rotation) + dy * Math.cos(rotation)
-      };
-    };
-
+    // Apply rotation to corners for hit testing
     for (let i = 0; i < sketch.corners.length; i++) {
       const corner = sketch.corners[i];
-      const rotated = rotatePoint(pos.x + corner.x, pos.y + corner.y);
-      const dx = x - rotated.x;
-      const dy = y - rotated.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      const dx = corner.x - centerX;
+      const dy = corner.y - centerY;
+      const rotatedX = centerX + dx * Math.cos(rotation) - dy * Math.sin(rotation);
+      const rotatedY = centerY + dx * Math.sin(rotation) + dy * Math.cos(rotation);
+
+      const absCorner = {
+        x: pos.x + rotatedX,
+        y: pos.y + rotatedY
+      };
+
+      const distX = x - absCorner.x;
+      const distY = y - absCorner.y;
+      const dist = Math.sqrt(distX * distX + distY * distY);
 
       if (dist <= hitRadius) {
         return i;
@@ -110,10 +105,22 @@ export class TransformManager {
     if (!sketch) return false;
 
     const pos = sketch.position;
-    const corners = sketch.corners.map(c => ({
-      x: pos.x + c.x,
-      y: pos.y + c.y
-    }));
+    const rotation = sketch.transform.rotation * (Math.PI / 180);
+    const size = sketch.size;
+    const centerX = size.width / 2;
+    const centerY = size.height / 2;
+
+    // Apply rotation to corners for containment testing
+    const corners = sketch.corners.map(c => {
+      const dx = c.x - centerX;
+      const dy = c.y - centerY;
+      const rotatedX = centerX + dx * Math.cos(rotation) - dy * Math.sin(rotation);
+      const rotatedY = centerY + dx * Math.sin(rotation) + dy * Math.cos(rotation);
+      return {
+        x: pos.x + rotatedX,
+        y: pos.y + rotatedY
+      };
+    });
 
     // Use ray casting algorithm to test if point is inside polygon
     let inside = false;
@@ -152,15 +159,30 @@ export class TransformManager {
     } else if (this.selectedHandle !== null) {
       // Move corner handle
       const pos = this.draggedSketch.position;
+      const rotation = this.draggedSketch.transform.rotation * (Math.PI / 180);
+      const size = this.draggedSketch.size;
+      const centerX = size.width / 2;
+      const centerY = size.height / 2;
+
+      // Convert from screen coordinates to local coordinates, accounting for rotation
+      let localX = x - pos.x;
+      let localY = y - pos.y;
+
+      // Unrotate the point back to local space
+      const dx = localX - centerX;
+      const dy = localY - centerY;
+      const unrotatedX = centerX + dx * Math.cos(-rotation) - dy * Math.sin(-rotation);
+      const unrotatedY = centerY + dx * Math.sin(-rotation) + dy * Math.cos(-rotation);
+
       const newCorners = [...this.draggedSketch.corners];
       newCorners[this.selectedHandle] = {
-        x: x - pos.x,
-        y: y - pos.y
+        x: unrotatedX,
+        y: unrotatedY
       };
       this.sketchManager.updateSketchCorners(this.draggedSketch.id, newCorners);
 
       // Apply the visual transform
-      this.applyCornerTransform(this.draggedSketch);
+      this.applyTransform(this.draggedSketch);
     }
   }
 
@@ -184,6 +206,55 @@ export class TransformManager {
         corners[1].x, corners[1].y,
         corners[2].x, corners[2].y,
         corners[3].x, corners[3].y
+      ]
+    );
+
+    // Apply the transform matrix
+    if (matrix) {
+      container.style.transform = `matrix3d(${matrix.join(',')})`;
+      container.style.transformOrigin = '0 0';
+
+      // Update container position
+      container.style.left = `${pos.x}px`;
+      container.style.top = `${pos.y}px`;
+      container.style.width = `${size.width}px`;
+      container.style.height = `${size.height}px`;
+    }
+  }
+
+  applyCornerTransformWithRotation(sketch) {
+    if (!sketch) return;
+
+    const container = sketch.container;
+    if (!container) return;
+
+    const corners = sketch.corners;
+    const size = sketch.size;
+    const pos = sketch.position;
+    const rotation = sketch.transform.rotation * (Math.PI / 180);
+    const centerX = size.width / 2;
+    const centerY = size.height / 2;
+
+    // Rotate the corners around the center point to account for rotation
+    const rotatedCorners = corners.map(corner => {
+      const dx = corner.x - centerX;
+      const dy = corner.y - centerY;
+      return {
+        x: centerX + dx * Math.cos(rotation) - dy * Math.sin(rotation),
+        y: centerY + dx * Math.sin(rotation) + dy * Math.cos(rotation)
+      };
+    });
+
+    // Calculate the perspective transform matrix from the rotated corner points
+    const matrix = this.calculatePerspectiveMatrix(
+      // Source rectangle (original)
+      [0, 0, size.width, 0, size.width, size.height, 0, size.height],
+      // Destination quad (warped + rotated corners)
+      [
+        rotatedCorners[0].x, rotatedCorners[0].y,
+        rotatedCorners[1].x, rotatedCorners[1].y,
+        rotatedCorners[2].x, rotatedCorners[2].y,
+        rotatedCorners[3].x, rotatedCorners[3].y
       ]
     );
 
@@ -298,18 +369,22 @@ export class TransformManager {
     const container = sketch.container;
     if (!container) return;
 
-    // Apply CSS transform directly to the container (which contains the iframe)
-    const t = sketch.transform;
-    const transform = `
-      rotate(${t.rotation}deg)
-      scale(${t.scaleX}, ${t.scaleY})
-      skew(${t.skewX}deg, ${t.skewY}deg)
-    `;
-    container.style.transform = transform;
+    // Check if the sketch is warped (has non-default corners)
+    const isWarped = this.isQuadWarped(sketch.corners, sketch.size);
 
-    // For quad warping, we need to use a different approach
-    // We'll render to an off-screen canvas and apply perspective transform
-    this.applyPerspectiveTransform(sketch);
+    if (isWarped) {
+      // If warped, apply both rotation and warp using the corner-based matrix
+      this.applyCornerTransformWithRotation(sketch);
+    } else {
+      // If not warped, just apply basic CSS transforms
+      const t = sketch.transform;
+      const transform = `
+        rotate(${t.rotation}deg)
+        scale(${t.scaleX}, ${t.scaleY})
+        skew(${t.skewX}deg, ${t.skewY}deg)
+      `;
+      container.style.transform = transform;
+    }
   }
 
   applyPerspectiveTransform(sketch) {

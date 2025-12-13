@@ -463,6 +463,7 @@ class ProjectionMapper {
     });
 
     document.getElementById('delete-sketch-btn').addEventListener('click', () => {
+      this.sketchManager.selectSketch(null);
       this.sketchManager.removeSketch(sketch.id);
       this.hidePropertiesPanel();
     });
@@ -676,10 +677,14 @@ class Drop {
           this.sketchManager.fromJSON(project.sketches);
           this.maskManager.fromJSON(project.masks);
 
-          // Append sketch containers to DOM
+          // Append sketch containers to DOM and apply transforms
           this.sketchManager.getAllSketches().forEach(sketch => {
             this.container.appendChild(sketch.container);
+            this.transformManager.applyTransform(sketch);
           });
+
+          // Save to localStorage immediately so it persists on refresh
+          this.saveToLocalStorage();
         } catch (error) {
           alert('Error loading project: ' + error.message);
         }

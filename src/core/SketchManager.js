@@ -217,8 +217,9 @@ export class SketchManager {
   fromJSON(data) {
     // Clear existing sketches
     this.sketches.forEach(s => {
-      s.p5Instance.remove();
-      s.container.remove();
+      if (s.container) {
+        s.container.remove();
+      }
     });
     this.sketches = [];
 

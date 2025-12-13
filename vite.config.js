@@ -4,6 +4,7 @@ export default defineConfig({
   base: '/projection_mapper/',
   build: {
     outDir: 'dist',
-    assetsDir: 'assets'
+    assetsDir: 'assets',
+    sourcemap: false
   }
 })

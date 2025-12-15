@@ -24,10 +24,9 @@ let highLevel = 0;
 // Fade and reset system
 let fadeOpacity = 0;
 let fadeState = 'visible'; // 'visible', 'fading_out', 'black', 'fading_in'
-let fadeSpeed = 1 / (2 * 60); // 2 second fades at 60fps
+let fadeSpeed = 1 / (1.5 * 60); // 1.5 second fades at 60fps
 let resetTimer = 0;
-let resetInterval = 30 * 60; // Reset every 30 seconds
-let lastChangeAmount = 0;
+let resetInterval = 80 * 60; // Reset every 80 seconds
 
 function setup() {
   createCanvas(400, 400); // Reduced from 800x800 for better performance
@@ -64,6 +63,9 @@ function setup() {
   }
 
   noSmooth(); // Disable anti-aliasing for sharper rendering
+
+  // Start microphone by default
+  startMicrophone();
 }
 
 function resetPattern() {
@@ -149,7 +151,9 @@ function draw() {
   // Handle fade state machine
   if (fadeState === 'visible') {
     resetTimer++;
-    if (resetTimer >= resetInterval) {
+    // Use 15 second interval if mic is active, 80 seconds otherwise
+    let currentInterval = micActive ? 15 * 60 : resetInterval;
+    if (resetTimer >= currentInterval) {
       fadeState = 'fading_out';
       fadeOpacity = 0;
     }
@@ -244,10 +248,10 @@ function draw() {
         g = c * 255 * (0.5 + midLevel * 1.5);
         bl = c * 255 * (1 + highLevel * 2);
       } else {
-        // High contrast white on black
+        // Red on black
         r = c * 255;
-        g = c * 255;
-        bl = c * 255;
+        g = 0;
+        bl = 0;
       }
 
       let index = (x + y * width) * 4;
@@ -264,15 +268,6 @@ function draw() {
     fill(0, fadeOpacity * 255);
     noStroke();
     rect(0, 0, width, height);
-  }
-
-  // Display audio info if active
-  if (micActive && fadeState === 'visible') {
-    fill(255);
-    noStroke();
-    textSize(12);
-    text('MIC ON - Bass: ' + nf(bassLevel, 1, 2) + ' Mid: ' + nf(midLevel, 1, 2) + ' High: ' + nf(highLevel, 1, 2), 10, 20);
-    text('Feed: ' + nf(feed, 1, 3) + ' k: ' + nf(k, 1, 3), 10, 40);
   }
 }
 

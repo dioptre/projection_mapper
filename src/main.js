@@ -15,11 +15,15 @@ class ProjectionMapper {
     this.maskManager = new MaskManager(this.canvas);
 
     // State
-    this.currentTool = 'select'; // 'select', 'mask', 'add-sketch'
+    this.currentTool = 'select'; // 'select', 'mask', 'draw', 'add-sketch'
     this.isFullscreen = false;
     this.isPresentationMode = false;
     this.mouseIdleTimeout = null;
     this.lastMouseMove = Date.now();
+
+    // Drawing state
+    this.isDrawing = false;
+    this.drawPath = [];
 
     // Setup
     this.setupCanvas();
@@ -108,6 +112,10 @@ class ProjectionMapper {
 
     document.getElementById('tool-mask').addEventListener('click', () => {
       this.setTool('mask');
+    });
+
+    document.getElementById('tool-draw').addEventListener('click', () => {
+      this.setTool('draw');
     });
 
     document.getElementById('tool-add-sketch').addEventListener('click', () => {
@@ -202,6 +210,8 @@ class ProjectionMapper {
       this.handleSelectMouseDown(x, y);
     } else if (this.currentTool === 'mask') {
       this.handleMaskMouseDown(x, y, e);
+    } else if (this.currentTool === 'draw') {
+      this.handleDrawMouseDown(x, y);
     }
   }
 
@@ -274,6 +284,135 @@ class ProjectionMapper {
     this.maskManager.addPoint(x, y, isBezier);
   }
 
+  handleDrawMouseDown(x, y) {
+    this.isDrawing = true;
+    this.drawPath = [{x, y}];
+  }
+
+  handleDrawMouseMove(x, y) {
+    if (!this.isDrawing) return;
+
+    // Add point if it's far enough from the last point
+    const lastPoint = this.drawPath[this.drawPath.length - 1];
+    const dist = Math.sqrt((x - lastPoint.x) ** 2 + (y - lastPoint.y) ** 2);
+
+    if (dist > 5) { // Minimum distance between points
+      this.drawPath.push({x, y});
+    }
+  }
+
+  handleDrawMouseUp() {
+    if (!this.isDrawing || this.drawPath.length < 3) {
+      this.isDrawing = false;
+      this.drawPath = [];
+      return;
+    }
+
+    // Simplify and convert to bezier curve
+    const simplifiedPath = this.simplifyPath(this.drawPath, 10); // tolerance of 10 pixels
+    this.convertPathToMask(simplifiedPath);
+
+    this.isDrawing = false;
+    this.drawPath = [];
+  }
+
+  simplifyPath(points, tolerance) {
+    // Douglas-Peucker algorithm for path simplification
+    if (points.length <= 2) return points;
+
+    // Find the point with maximum distance
+    let maxDist = 0;
+    let index = 0;
+    const end = points.length - 1;
+
+    for (let i = 1; i < end; i++) {
+      const dist = this.perpendicularDistance(points[i], points[0], points[end]);
+      if (dist > maxDist) {
+        maxDist = dist;
+        index = i;
+      }
+    }
+
+    // If max distance is greater than tolerance, recursively simplify
+    if (maxDist > tolerance) {
+      const left = this.simplifyPath(points.slice(0, index + 1), tolerance);
+      const right = this.simplifyPath(points.slice(index), tolerance);
+      return left.slice(0, -1).concat(right);
+    } else {
+      return [points[0], points[end]];
+    }
+  }
+
+  perpendicularDistance(point, lineStart, lineEnd) {
+    const dx = lineEnd.x - lineStart.x;
+    const dy = lineEnd.y - lineStart.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+
+    if (mag === 0) return Math.sqrt((point.x - lineStart.x) ** 2 + (point.y - lineStart.y) ** 2);
+
+    const u = ((point.x - lineStart.x) * dx + (point.y - lineStart.y) * dy) / (mag * mag);
+
+    let closestX, closestY;
+    if (u < 0) {
+      closestX = lineStart.x;
+      closestY = lineStart.y;
+    } else if (u > 1) {
+      closestX = lineEnd.x;
+      closestY = lineEnd.y;
+    } else {
+      closestX = lineStart.x + u * dx;
+      closestY = lineStart.y + u * dy;
+    }
+
+    return Math.sqrt((point.x - closestX) ** 2 + (point.y - closestY) ** 2);
+  }
+
+  convertPathToMask(points) {
+    // Start a new mask
+    this.maskManager.startNewMask();
+
+    // Add all points as bezier points with automatically calculated control points
+    points.forEach((point, i) => {
+      // Calculate tangent for smooth curves
+      let cpBefore, cpAfter;
+
+      if (i === 0) {
+        // First point - use direction to next point
+        const next = points[i + 1];
+        const dx = next.x - point.x;
+        const dy = next.y - point.y;
+        cpBefore = { x: point.x - dx * 0.25, y: point.y - dy * 0.25 };
+        cpAfter = { x: point.x + dx * 0.25, y: point.y + dy * 0.25 };
+      } else if (i === points.length - 1) {
+        // Last point - use direction from previous point
+        const prev = points[i - 1];
+        const dx = point.x - prev.x;
+        const dy = point.y - prev.y;
+        cpBefore = { x: point.x - dx * 0.25, y: point.y - dy * 0.25 };
+        cpAfter = { x: point.x + dx * 0.25, y: point.y + dy * 0.25 };
+      } else {
+        // Middle points - use average of directions
+        const prev = points[i - 1];
+        const next = points[i + 1];
+        const dx = (next.x - prev.x) * 0.25;
+        const dy = (next.y - prev.y) * 0.25;
+        cpBefore = { x: point.x - dx, y: point.y - dy };
+        cpAfter = { x: point.x + dx, y: point.y + dy };
+      }
+
+      // Add point with control points
+      const addedPoint = this.maskManager.addPoint(point.x, point.y, true);
+      if (addedPoint && addedPoint.controlPoints) {
+        addedPoint.controlPoints[0] = cpBefore;
+        addedPoint.controlPoints[1] = cpAfter;
+      }
+    });
+
+    // Close the mask
+    this.maskManager.closeMask();
+    this.maskManager.finishMask();
+  }
+
   onMouseMove(e) {
     // Skip event handling in interact mode - let events pass to iframes
     if (this.currentTool === 'interact') {
@@ -289,6 +428,8 @@ class ProjectionMapper {
       this.maskManager.drag(x, y); // Also handle mask dragging in select mode
     } else if (this.currentTool === 'mask') {
       this.maskManager.drag(x, y);
+    } else if (this.currentTool === 'draw') {
+      this.handleDrawMouseMove(x, y);
     }
   }
 
@@ -303,6 +444,8 @@ class ProjectionMapper {
       this.maskManager.endDrag(); // Also end mask dragging in select mode
     } else if (this.currentTool === 'mask') {
       this.maskManager.endDrag();
+    } else if (this.currentTool === 'draw') {
+      this.handleDrawMouseUp();
     }
   }
 
@@ -388,6 +531,23 @@ class ProjectionMapper {
     const selectedSketch = this.sketchManager.getSelectedSketch();
     if (selectedSketch && this.currentTool === 'select' && !hideEditingVisuals) {
       this.transformManager.drawHandles(selectedSketch);
+    }
+
+    // Draw the current drawing path
+    if (this.isDrawing && this.drawPath.length > 1) {
+      this.ctx.save();
+      this.ctx.strokeStyle = '#4a9eff';
+      this.ctx.lineWidth = 3;
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.drawPath[0].x, this.drawPath[0].y);
+      for (let i = 1; i < this.drawPath.length; i++) {
+        this.ctx.lineTo(this.drawPath[i].x, this.drawPath[i].y);
+      }
+      this.ctx.stroke();
+      this.ctx.restore();
     }
 
     requestAnimationFrame(() => this.animate());

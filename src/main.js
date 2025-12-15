@@ -466,14 +466,17 @@ class ProjectionMapper {
         if (selectedSketch) {
           this.sketchManager.removeSketch(selectedSketch.id);
           this.hidePropertiesPanel();
+          this.saveToLocalStorage(); // Save after deletion
         } else if (selectedMask) {
           this.maskManager.deleteMask(selectedMask.id);
           this.maskManager.selectMaskByIndex(null);
+          this.saveToLocalStorage(); // Save after deletion
         }
       } else if (this.currentTool === 'mask') {
         // Delete selected point in mask
         if (this.maskManager.selectedPoint) {
           this.maskManager.deleteSelectedPoint();
+          this.saveToLocalStorage(); // Save after deletion
         }
       }
     }
@@ -631,6 +634,7 @@ class ProjectionMapper {
       this.sketchManager.selectSketch(null);
       this.sketchManager.removeSketch(sketch.id);
       this.hidePropertiesPanel();
+      this.saveToLocalStorage(); // Save after deletion
     });
   }
 
